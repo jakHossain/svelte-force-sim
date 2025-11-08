@@ -17,7 +17,9 @@
     "checkJs": true,
     "moduleDetection": "force",
     "paths": {
-      "$lib/*": ["src/lib/*"]
+      "$lib/*": ["./src/lib/*"],
+      "$forceMap/*": ["./src/forceMap/*"],
+      "$utils/*": ["./src/utils/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]

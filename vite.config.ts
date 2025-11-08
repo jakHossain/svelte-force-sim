@@ -8,7 +8,9 @@ export default defineConfig({
   plugins: [dsv(), svelte()],
   resolve: {
     alias: {
-      $lib: path.resolve("./src/lib/*"),
+      $lib: path.resolve(__dirname, "src/lib/"),
+      $forceMap: path.resolve(__dirname, "src/forceMap/"),
+      $utils: path.resolve(__dirname, "src/utils/"),
     },
   },
 });

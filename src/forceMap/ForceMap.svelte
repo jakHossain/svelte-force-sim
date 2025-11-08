@@ -1,16 +1,21 @@
+<!--
+  @component ForceMap
+
+  Divides its container into a grid of equal-sized zones, recalculating on resize.
+  Optionally renders a visual overlay of the grid for debugging or UI purposes.
+  Designed for extensibility and future library use.
+
+  - `children` (Snippet, optional): Svelte snippet to render when zones are ready.
+  - `rows` (number): Number of grid rows (must be ≥ 1).
+  - `cols` (number): Number of grid columns (must be ≥ 1).
+  - `showZones` (boolean, optional): If true, displays a visual overlay of the grid zones.
+
+-->
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { onMount, onDestroy, untrack } from "svelte";
-
-  type ForceZone = {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-    width: number;
-    height: number;
-    center: { x: number; y: number };
-  };
+  import { untrack } from "svelte";
+  import { debounce } from "$utils/helpers";
+  import type { ForceZone } from "$forceMap/types/force-map";
 
   type ForceMapProps = {
     children?: Snippet;
@@ -29,36 +34,28 @@
   let node: HTMLDivElement | null = $state(null);
   let containerDimensions = $state<DOMRect | null>(null);
 
-  function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
-    let timer: ReturnType<typeof setTimeout>;
-    return (...args: Parameters<T>) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn(...args), delay);
-    };
-  }
-
   let debouncedResizer = $derived(
     debounce(() => {
       containerDimensions = node ? node.getBoundingClientRect() : null;
     }, 50)
   );
 
-  let resizerObs: ResizeObserver | null = $state(null);
+  let resizeObs: ResizeObserver | null = $state(null);
 
   $effect(() => {
     if (!debouncedResizer || !node) return;
 
-    //untrack prevents reconfiguring the resizerObserver from triggering an infinite loop
+    //untrack prevents reconfiguring the resizeObs from triggering an infinite loop
     untrack(() => {
-      if (resizerObs) {
-        resizerObs.disconnect();
+      if (resizeObs) {
+        resizeObs.disconnect();
       }
-      resizerObs = new ResizeObserver(debouncedResizer);
-      resizerObs.observe(node as Element);
+      resizeObs = new ResizeObserver(debouncedResizer);
+      resizeObs.observe(node as Element);
     });
 
     return () => {
-      resizerObs?.disconnect();
+      resizeObs?.disconnect();
     };
   });
 
@@ -100,8 +97,6 @@
       })
     );
   });
-
-  $inspect(debouncedResizer);
 </script>
 
 <div bind:this={node} class="force-map-layer">
