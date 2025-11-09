@@ -1,7 +1,16 @@
 import type { ForceMapState, ForceZone } from "$forceMap/types/force-map";
 import { writable } from "svelte/store";
 
-const initForceMap = (
+/**
+ * Initializes a ForceMap state store for a given container element and grid size.
+ * Calculates initial zones and container metadata.
+ *
+ * @param {HTMLElement} node - The container element for the force map.
+ * @param {number} zoneCols - Number of columns in the grid (must be ≥ 1).
+ * @param {number} zoneRows - Number of rows in the grid (must be ≥ 1).
+ * @throws {Error} If node is not provided, or if zoneCols/zoneRows are less than 1.
+ */
+export const initForceMap = (
   node: HTMLElement,
   zoneCols: number,
   zoneRows: number
@@ -73,6 +82,19 @@ const initForceMap = (
   };
 };
 
+/**
+ * Calculates a 2D array of ForceZone objects representing grid zones
+ * for the given container dimensions and grid size.
+ *
+ * Each zone's width/height is equalized based on the container width/height and the number of columns/rows
+ *
+ * @param {number} containerWidth - Width of the container in pixels.
+ * @param {number} containerHeight - Height of the container in pixels.
+ * @param {number} cols - Number of columns in the grid (must be ≥ 1).
+ * @param {number} rows - Number of rows in the grid (must be ≥ 1).
+ * @returns {ForceZone[][]} 2D array of ForceZone objects.
+ * @throws {Error} If container dimensions are zero or negative, or if rows/cols are less than 1.
+ */
 const createZones = (
   containerWidth: number,
   containerHeight: number,

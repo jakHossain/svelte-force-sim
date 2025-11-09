@@ -13,9 +13,10 @@
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { untrack } from "svelte";
+  import { onMount, setContext, untrack } from "svelte";
   import { debounce } from "$utils/helpers";
   import type { ForceZone } from "$forceMap/types/force-map";
+  import { initForceMap } from "$forceMap/ForceState.svelte";
 
   type ForceMapProps = {
     children?: Snippet;
@@ -32,15 +33,21 @@
   }: ForceMapProps = $props();
 
   let node: HTMLDivElement | null = $state(null);
-  let containerDimensions = $state<DOMRect | null>(null);
+
+  let forceMapState = $state<ReturnType<typeof initForceMap>>();
+
+  onMount(() => {
+    forceMapState = initForceMap(node!, cols, rows);
+    setContext("ForceMap", forceMapState);
+  });
 
   let debouncedResizer = $derived(
     debounce(() => {
-      containerDimensions = node ? node.getBoundingClientRect() : null;
+      forceMapState?.updateForceMap(rows, cols);
     }, 75)
   );
 
-  let resizeObs: ResizeObserver | null = $state(null);
+  let resizeObs = $state<ResizeObserver>();
 
   $effect(() => {
     if (!debouncedResizer || !node) return;
@@ -58,55 +65,16 @@
       resizeObs?.disconnect();
     };
   });
-
-  let forceZones: null | ForceZone[][] = $derived.by(() => {
-    //do not generate zones if dimensions are undefined or 0
-    if (!containerDimensions) {
-      return null;
-    }
-    if (containerDimensions.width < 0 || containerDimensions.height < 0) {
-      return null;
-    }
-    if (rows < 1 || cols < 1) {
-      throw new Error("ForceMaps must have at least 1 row AND column(s)");
-    }
-
-    const zoneWidth = containerDimensions.width / cols;
-    const zoneHeight = containerDimensions.height / rows;
-
-    return Array.from({ length: rows }, (_, row): ForceZone[] =>
-      Array.from({ length: cols }, (_, col): ForceZone => {
-        let left = col * zoneWidth;
-        let right = left + zoneWidth;
-        let top = row * zoneHeight;
-        let bottom = top + zoneHeight;
-        let center = {
-          x: left + zoneWidth / 2,
-          y: top + zoneHeight / 2,
-        };
-
-        return {
-          left,
-          right,
-          bottom,
-          top,
-          width: zoneWidth,
-          height: zoneHeight,
-          center,
-        };
-      })
-    );
-  });
 </script>
 
 <div bind:this={node} class="force-map-layer">
   <!-- Only render child elements if zones are ready -->
-  {#if forceZones}
+  {#if forceMapState}
     {#if children}
       {@render children()}
     {/if}
     {#if showZones}
-      {#each forceZones as zoneRow, rowNum}
+      {#each $forceMapState?.forceZones as zoneRow, rowNum}
         {#each zoneRow as zone, colNum}
           <div
             class="force-zone"
