@@ -18,6 +18,7 @@
     "moduleDetection": "force",
     "paths": {
       "$lib/*": ["./src/lib/*"],
+      "$components/*": ["./src/lib/components/*"],
       "$forceMap/*": ["./src/forceMap/*"],
       "$utils/*": ["./src/utils/*"]
     }

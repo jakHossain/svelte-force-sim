@@ -1,4 +1,5 @@
 import type { ScaleLinear } from "d3-scale";
+import type { Subscriber } from "svelte/store";
 
 export type ForceZone = {
   left: number;
@@ -11,13 +12,15 @@ export type ForceZone = {
 };
 
 export type ForceMapState = {
-  center: { x: number; y: number };
   container: HTMLElement;
-  containerDimensions: DOMRect;
-  globalXScale: ScaleLinear<number, number>;
-  globalYScale: ScaleLinear<number, number>;
+  containerWidth: number;
+  containerHeight: number;
+  containerCenter: { x: number; y: number };
   forceZones: ForceZone[][];
   rows: number;
   cols: number;
-  updateZones: () => void;
+};
+
+export type ForceMapStateHelpers = {
+  updateForceMap: () => void;
 };

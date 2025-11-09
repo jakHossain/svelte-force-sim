@@ -37,7 +37,7 @@
   let debouncedResizer = $derived(
     debounce(() => {
       containerDimensions = node ? node.getBoundingClientRect() : null;
-    }, 50)
+    }, 75)
   );
 
   let resizeObs: ResizeObserver | null = $state(null);

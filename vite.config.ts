@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       $lib: path.resolve(__dirname, "src/lib/"),
+      $componentsk: path.resolve(__dirname, "/lib/components"),
       $forceMap: path.resolve(__dirname, "src/forceMap/"),
       $utils: path.resolve(__dirname, "src/utils/"),
     },
