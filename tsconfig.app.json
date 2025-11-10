@@ -20,7 +20,8 @@
       "$lib/*": ["./src/lib/*"],
       "$components/*": ["./src/lib/components/*"],
       "$forceMap/*": ["./src/forceMap/*"],
-      "$utils/*": ["./src/utils/*"]
+      "$utils/*": ["./src/utils/*"],
+      "$data/*": ["./src/data/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]

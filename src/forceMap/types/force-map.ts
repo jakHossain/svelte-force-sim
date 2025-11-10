@@ -1,3 +1,4 @@
+import type { initForceMap } from "$forceMap/ForceState.svelte";
 import type { ScaleLinear } from "d3-scale";
 import type { Subscriber } from "svelte/store";
 
@@ -21,6 +22,4 @@ export type ForceMapState = {
   cols: number;
 };
 
-export type ForceMapStateHelpers = {
-  updateForceMap: () => void;
-};
+export type ForceMapContext = ReturnType<typeof initForceMap>;

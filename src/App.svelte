@@ -1,6 +1,6 @@
 <script>
   import ForceMap from "$forceMap/ForceMap.svelte";
-  import Bubbles from "$lib/components/Bubbles.svelte";
+  import Bubbles from "$lib/Bubbles.svelte";
 </script>
 
 <div style:width="100vw" style:height="100vh">

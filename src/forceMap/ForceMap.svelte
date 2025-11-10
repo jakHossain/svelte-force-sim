@@ -15,7 +15,6 @@
   import type { Snippet } from "svelte";
   import { onMount, setContext, untrack } from "svelte";
   import { debounce } from "$utils/helpers";
-  import type { ForceZone } from "$forceMap/types/force-map";
   import { initForceMap } from "$forceMap/ForceState.svelte";
 
   type ForceMapProps = {

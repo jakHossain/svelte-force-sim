@@ -12,6 +12,7 @@ export default defineConfig({
       $componentsk: path.resolve(__dirname, "/lib/components"),
       $forceMap: path.resolve(__dirname, "src/forceMap/"),
       $utils: path.resolve(__dirname, "src/utils/"),
+      $data: path.resolve(__dirname, "src/data/"),
     },
   },
 });
