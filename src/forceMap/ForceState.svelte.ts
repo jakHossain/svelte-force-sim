@@ -7,12 +7,16 @@ import { writable } from "svelte/store";
 
 /**
  * Initializes a ForceMap state store for a given container element and grid size.
- * Calculates initial zones and container metadata.
+ * Calculates initial zone boundaries and container metadata.
  *
  * @param {HTMLElement} node - The container element for the force map.
  * @param {number} zoneCols - Number of columns in the grid (must be ≥ 1).
  * @param {number} zoneRows - Number of rows in the grid (must be ≥ 1).
  * @throws {Error} If node is not provided, or if zoneCols/zoneRows are less than 1.
+ * @returns {{
+ *   subscribe: import("svelte/store").Subscriber<ForceMapState>,
+ *   updateForceMap: (rows?: number, cols?: number) => void
+ * }} Svelte store API for subscribing to state and updating grid size.
  */
 export const initForceMap = (
   node: HTMLElement,
@@ -91,7 +95,8 @@ export const initForceMap = (
  * Calculates a 2D array of ForceZone objects representing grid zones
  * for the given container dimensions and grid size.
  *
- * Each zone's width/height is equalized based on the container width/height and the number of columns/rows
+ * Each zone's width and height are determined by dividing the container's width and height
+ * by the number of columns and rows, respectively, ensuring all zones are equal-sized.
  *
  * @param {number} containerWidth - Width of the container in pixels.
  * @param {number} containerHeight - Height of the container in pixels.
@@ -142,10 +147,21 @@ const createZones = (
   );
 };
 
+/**
+ * Creates a custom force for d3-force simulations that keeps nodes within the bounds of a specified ForceZone.
+ *
+ * The force applies a velocity adjustment to nodes that move outside the zone boundaries, nudging them back inside.
+ * The adjustment is proportional to the distance from the boundary, the specified strength, and the simulation's alpha.
+ *
+ * @param {ForceZone} forceZone - The zone boundary to constrain nodes within. See `$forceMap/types/force-map.ts` for definition.
+ * @param {number} [strength=0.2] - Magnitude of the applied force. Higher values (>2) may cause unpredictable behavior.
+ * @param {number|function} [radius=0] - Either a fixed number or a function `(node) => number` to determine a radius offset for boundary collision checks.
+ * @returns {function} A d3-force compatible force function.
+ */
 export function zoneBoundaryForce(
   forceZone: ForceZone,
   strength: number = 0.2,
-  radius: number | ((...args: unknown[]) => number) = 0
+  radius: number | ((node: ForceNodeData) => number) = 0
 ) {
   let nodes: ForceNodeData[];
   function force(alpha: number) {

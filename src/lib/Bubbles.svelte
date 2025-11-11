@@ -3,11 +3,7 @@
   import { getContext } from "svelte";
 
   import bubbleData from "$data/bubbleData.csv";
-  import { zoneBoundaryForce } from "$forceMap/ForceState.svelte";
-  import type {
-    ForceMapContext,
-    ForceNodeData,
-  } from "$forceMap/types/force-map";
+  import type { ForceMapContext } from "$forceMap/types/force-map";
   import { scaleSqrt } from "d3-scale";
 
   type NodeData = {
@@ -54,7 +50,7 @@
         .force(
           "boundary",
           $forceMap.zoneBoundaryForce($forceMap.forceZones[1][1], 1, (d) => {
-            let nodeData = d as ForceNodeData;
+            let nodeData = d as NodeData;
             return rScale(nodeData[rKey] as number);
           })
         )

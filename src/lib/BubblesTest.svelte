@@ -1,9 +1,9 @@
 <!--
 @component
-This is just here to compare against imperative d3
+This is just here to compare against imperative d3 force simulations
 -->
 <script>
-  select;
+  //@ts-nocheck
   import bubbleData from "$data/bubbleData.csv";
   import { forceCenter, forceCollide, forceSimulation } from "d3-force";
   import { scaleSqrt } from "d3-scale";
