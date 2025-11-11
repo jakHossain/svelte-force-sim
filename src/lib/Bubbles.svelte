@@ -1,17 +1,9 @@
 <script lang="ts">
-  import {
-    forceCenter,
-    forceCollide,
-    forceManyBody,
-    forceSimulation,
-  } from "d3-force";
-  import { getContext, untrack } from "svelte";
+  import { forceCenter, forceCollide, forceSimulation } from "d3-force";
+  import { getContext } from "svelte";
 
   import bubbleData from "$data/bubbleData.csv";
-  import type {
-    ForceMapContext,
-    ForceMapState,
-  } from "$forceMap/types/force-map";
+  import type { ForceMapContext } from "$forceMap/types/force-map";
   import { scaleSqrt } from "d3-scale";
 
   let maxR = -Infinity;
@@ -34,36 +26,32 @@
       .range([0, $forceMap.containerHeight / 10])
   );
 
-  let simulation = $derived(
-    forceSimulation(bubbleData)
-      .alphaTarget(0.3)
-      .velocityDecay(0.1)
-      .force(
-        "center",
-        forceCenter(
-          $forceMap.containerCenter.x,
-          $forceMap.containerCenter.y
-        ).strength(1)
-      )
-      .force("collide", forceCollide((d) => rScale(d[rKey])).strength(0.008))
-      .on("tick", () => {
-        nodes = [...bubbleData];
-      })
-      .stop()
-  );
+  let simulation = $derived.by(() => {
+    return () => {
+      //doing a deeper copy allows force simulation to fully reset on a resize
+      const cleanData = bubbleData.map((d) => {
+        return { ...d };
+      });
 
-  $effect(() => {
-    console.log("rscale updated!", rScale);
+      return forceSimulation(cleanData)
+        .force(
+          "center",
+          forceCenter($forceMap.containerCenter.x, $forceMap.containerCenter.y)
+        )
+        .force(
+          "collide",
+          forceCollide((d) => rScale(d[rKey] * 1.1)).strength(0.05)
+        )
+        .on("tick", () => {
+          nodes = [...cleanData];
+        });
+    };
   });
 
   $effect(() => {
-    if (simulation) {
-      console.log("simulation updated!", rScale);
-    }
+    nodes = [];
 
-    untrack(() => {
-      simulation.restart();
-    });
+    simulation();
   });
 </script>
 
