@@ -1,9 +1,14 @@
 <script lang="ts">
-  import { forceCenter, forceCollide, forceSimulation } from "d3-force";
-  import { getContext } from "svelte";
+  import {
+    forceCenter,
+    forceCollide,
+    forceManyBody,
+    forceSimulation,
+  } from "d3-force";
+  import { getContext, untrack } from "svelte";
 
   import bubbleData from "$data/bubbleData.csv";
-  import type { ForceMapContext } from "$forceMap/types/force-map";
+  import type { ForceMapContext, ForceZone } from "$forceMap/types/force-map";
   import { scaleSqrt } from "d3-scale";
 
   let maxR = -Infinity;
@@ -16,7 +21,7 @@
     });
   });
 
-  let nodes = $state();
+  let renderNodes = $state();
 
   const forceMap = getContext<ForceMapContext>("ForceMap");
 
@@ -25,6 +30,33 @@
       .domain([0, maxR])
       .range([0, $forceMap.containerHeight / 10])
   );
+
+  function forceBoundary(forceZone: ForceZone, strength: number = 0.2) {
+    let nodes;
+    function force(alpha) {
+      for (const node of nodes) {
+        const radiusFactor = rScale(node[rKey]);
+        if (node.x + radiusFactor > forceZone.right) {
+          node.vx -=
+            (node.x - forceZone.right + radiusFactor) * strength * alpha;
+        }
+        if (node.x - radiusFactor < forceZone.left) {
+          node.vx +=
+            (forceZone.left - node.x + radiusFactor) * strength * alpha;
+        }
+        if (node.y + radiusFactor > forceZone.bottom) {
+          node.vy -=
+            (node.y - forceZone.bottom + radiusFactor) * strength * alpha;
+        }
+        if (node.y - radiusFactor < forceZone.top) {
+          node.vy += (forceZone.top - node.y + radiusFactor) * strength * alpha;
+        }
+      }
+    }
+
+    force.initialize = (_) => (nodes = _);
+    return force;
+  }
 
   let simulation = $derived.by(() => {
     return () => {
@@ -38,30 +70,27 @@
           "center",
           forceCenter($forceMap.containerCenter.x, $forceMap.containerCenter.y)
         )
-        .force(
-          "collide",
-          forceCollide((d) => rScale(d[rKey] * 1.1)).strength(0.05)
-        )
+        .force("charge", forceManyBody().strength(-50))
+        .force("boundary", forceBoundary($forceMap.forceZones[1][1], 1))
         .on("tick", () => {
-          nodes = [...cleanData];
+          renderNodes = [...cleanData];
         });
     };
   });
 
   $effect(() => {
-    nodes = [];
-
     simulation();
   });
 </script>
 
 <svg class="svg-container">
   <g>
-    {#each nodes as node}
+    {#each renderNodes as node}
+      {@const nodeItem = node as { x: number; y: number; [rKey]: number }}
       <circle
-        cx={node.x}
-        cy={node.y}
-        r={rScale(node[rKey])}
+        cx={nodeItem.x}
+        cy={nodeItem.y}
+        r={rScale(nodeItem[rKey])}
         stroke="white"
         stroke-width="3"
         fill="green"
