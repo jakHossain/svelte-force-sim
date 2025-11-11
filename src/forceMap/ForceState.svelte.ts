@@ -1,4 +1,8 @@
-import type { ForceMapState, ForceZone } from "$forceMap/types/force-map";
+import type {
+  ForceMapState,
+  ForceNodeData,
+  ForceZone,
+} from "$forceMap/types/force-map";
 import { writable } from "svelte/store";
 
 /**
@@ -53,6 +57,7 @@ export const initForceMap = (
     forceZones: initZones,
     rows: zoneRows,
     cols: zoneCols,
+    zoneBoundaryForce,
   });
 
   const updateForceMap = (rows?: number, cols?: number) => {
@@ -136,3 +141,32 @@ const createZones = (
     })
   );
 };
+
+export function zoneBoundaryForce(
+  forceZone: ForceZone,
+  strength: number = 0.2,
+  radius: number | ((...args: unknown[]) => number) = 0
+) {
+  let nodes: ForceNodeData[];
+  function force(alpha: number) {
+    for (const node of nodes) {
+      const radiusFactor = typeof radius === "function" ? radius(node) : radius;
+      if (node.x + radiusFactor > forceZone.right) {
+        node.vx -= (node.x - forceZone.right + radiusFactor) * strength * alpha;
+      }
+      if (node.x - radiusFactor < forceZone.left) {
+        node.vx += (forceZone.left - node.x + radiusFactor) * strength * alpha;
+      }
+      if (node.y + radiusFactor > forceZone.bottom) {
+        node.vy -=
+          (node.y - forceZone.bottom + radiusFactor) * strength * alpha;
+      }
+      if (node.y - radiusFactor < forceZone.top) {
+        node.vy += (forceZone.top - node.y + radiusFactor) * strength * alpha;
+      }
+    }
+  }
+
+  force.initialize = (_: ForceNodeData[]) => (nodes = _);
+  return force;
+}

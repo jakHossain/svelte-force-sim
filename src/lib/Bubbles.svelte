@@ -1,15 +1,22 @@
 <script lang="ts">
-  import {
-    forceCenter,
-    forceCollide,
-    forceManyBody,
-    forceSimulation,
-  } from "d3-force";
-  import { getContext, untrack } from "svelte";
+  import { forceCenter, forceManyBody, forceSimulation } from "d3-force";
+  import { getContext } from "svelte";
 
   import bubbleData from "$data/bubbleData.csv";
-  import type { ForceMapContext, ForceZone } from "$forceMap/types/force-map";
+  import { zoneBoundaryForce } from "$forceMap/ForceState.svelte";
+  import type {
+    ForceMapContext,
+    ForceNodeData,
+  } from "$forceMap/types/force-map";
   import { scaleSqrt } from "d3-scale";
+
+  type NodeData = {
+    x: number;
+    y: number;
+    [rKey]: number;
+    vx: number;
+    vy: number;
+  };
 
   let maxR = -Infinity;
 
@@ -21,47 +28,20 @@
     });
   });
 
-  let renderNodes = $state();
+  let renderNodes = $state<NodeData[]>();
 
   const forceMap = getContext<ForceMapContext>("ForceMap");
 
   let rScale = $derived(
     scaleSqrt()
       .domain([0, maxR])
-      .range([0, $forceMap.containerHeight / 10])
+      .range([0, $forceMap.forceZones[1][1].height / 4])
   );
-
-  function forceBoundary(forceZone: ForceZone, strength: number = 0.2) {
-    let nodes;
-    function force(alpha) {
-      for (const node of nodes) {
-        const radiusFactor = rScale(node[rKey]);
-        if (node.x + radiusFactor > forceZone.right) {
-          node.vx -=
-            (node.x - forceZone.right + radiusFactor) * strength * alpha;
-        }
-        if (node.x - radiusFactor < forceZone.left) {
-          node.vx +=
-            (forceZone.left - node.x + radiusFactor) * strength * alpha;
-        }
-        if (node.y + radiusFactor > forceZone.bottom) {
-          node.vy -=
-            (node.y - forceZone.bottom + radiusFactor) * strength * alpha;
-        }
-        if (node.y - radiusFactor < forceZone.top) {
-          node.vy += (forceZone.top - node.y + radiusFactor) * strength * alpha;
-        }
-      }
-    }
-
-    force.initialize = (_) => (nodes = _);
-    return force;
-  }
 
   let simulation = $derived.by(() => {
     return () => {
       //doing a deeper copy allows force simulation to fully reset on a resize
-      const cleanData = bubbleData.map((d) => {
+      const cleanData = bubbleData.map((d: NodeData) => {
         return { ...d };
       });
 
@@ -71,7 +51,13 @@
           forceCenter($forceMap.containerCenter.x, $forceMap.containerCenter.y)
         )
         .force("charge", forceManyBody().strength(-50))
-        .force("boundary", forceBoundary($forceMap.forceZones[1][1], 1))
+        .force(
+          "boundary",
+          $forceMap.zoneBoundaryForce($forceMap.forceZones[1][1], 1, (d) => {
+            let nodeData = d as ForceNodeData;
+            return rScale(nodeData[rKey] as number);
+          })
+        )
         .on("tick", () => {
           renderNodes = [...cleanData];
         });
@@ -83,25 +69,15 @@
   });
 </script>
 
-<svg class="svg-container">
-  <g>
-    {#each renderNodes as node}
-      {@const nodeItem = node as { x: number; y: number; [rKey]: number }}
-      <circle
-        cx={nodeItem.x}
-        cy={nodeItem.y}
-        r={rScale(nodeItem[rKey])}
-        stroke="white"
-        stroke-width="3"
-        fill="green"
-      ></circle>
-    {/each}
-  </g>
-</svg>
-
-<style>
-  .svg-container {
-    width: 100%;
-    height: 100%;
-  }
-</style>
+<g>
+  {#each renderNodes as node}
+    <circle
+      cx={node.x}
+      cy={node.y}
+      r={rScale(node[rKey])}
+      stroke="white"
+      stroke-width="3"
+      fill="green"
+    ></circle>
+  {/each}
+</g>
